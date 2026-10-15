@@ -57,9 +57,9 @@ class HashEmbedder:
 
 class OpenAIEmbedder:
     def __init__(self, model: str = "text-embedding-3-small", batch_size: int = 64) -> None:
-        from openai import OpenAI  # lazy import: the client is only needed in production
+        from ..llm import get_client  # lazy import: the client is only needed in production
 
-        self.client = OpenAI()
+        self.client = get_client()  # OpenAI or Azure OpenAI; the deployment is named like the model
         self.model = model
         self.name = f"openai:{model}"
         self.batch_size = batch_size
@@ -74,7 +74,8 @@ class OpenAIEmbedder:
 
 
 def get_embedder() -> Embedder:
-    provider = os.getenv("EMBEDDINGS_PROVIDER", "openai" if os.getenv("OPENAI_API_KEY") else "hash")
+    has_key = os.getenv("OPENAI_API_KEY") or os.getenv("AZURE_OPENAI_ENDPOINT")
+    provider = os.getenv("EMBEDDINGS_PROVIDER", "openai" if has_key else "hash")
     if provider == "openai":
         return OpenAIEmbedder(os.getenv("EMBEDDINGS_MODEL", "text-embedding-3-small"))
     return HashEmbedder()

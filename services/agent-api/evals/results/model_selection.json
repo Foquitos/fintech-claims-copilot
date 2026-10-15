@@ -1,0 +1,216 @@
+[
+  {
+    "model": "gpt-4.1-mini",
+    "baseline_prompt": "baseline.v2@19cbe3052c44",
+    "graph_category_acc": 1.0,
+    "baseline_category_acc": 1.0,
+    "baseline_action_acc": 0.625,
+    "graph_avg_latency_s": 0.97,
+    "baseline_avg_latency_s": 1.13,
+    "graph_cost_per_claim_usd": 0.000175,
+    "baseline_cost_per_claim_usd": 0.00013,
+    "graph_usage": {
+      "calls": 16,
+      "input_tokens": 6217,
+      "output_tokens": 195
+    },
+    "baseline_usage": {
+      "calls": 16,
+      "input_tokens": 4424,
+      "output_tokens": 192
+    },
+    "misses": [
+      {
+        "id": "dev-07",
+        "expected": [
+          "unrecognized_purchase",
+          "request_info"
+        ],
+        "graph_category": "unrecognized_purchase",
+        "baseline": [
+          "unrecognized_purchase",
+          "escalate_fraud"
+        ]
+      },
+      {
+        "id": "dev-08",
+        "expected": [
+          "qr_payment",
+          "inform_deadline"
+        ],
+        "graph_category": "qr_payment",
+        "baseline": [
+          "qr_payment",
+          "refund"
+        ]
+      },
+      {
+        "id": "dev-10",
+        "expected": [
+          "cashback",
+          "inform_deadline"
+        ],
+        "graph_category": "cashback",
+        "baseline": [
+          "cashback",
+          "escalate_promotions"
+        ]
+      },
+      {
+        "id": "dev-12",
+        "expected": [
+          "card_block",
+          "inform_deadline"
+        ],
+        "graph_category": "card_block",
+        "baseline": [
+          "card_block",
+          "block_card"
+        ]
+      },
+      {
+        "id": "dev-14",
+        "expected": [
+          "other",
+          "escalate_operations"
+        ],
+        "graph_category": "other",
+        "baseline": [
+          "other",
+          "reject"
+        ]
+      },
+      {
+        "id": "dev-15",
+        "expected": [
+          "other",
+          "escalate_operations"
+        ],
+        "graph_category": "other",
+        "baseline": [
+          "other",
+          "reject"
+        ]
+      }
+    ]
+  },
+  {
+    "model": "gpt-5.4-mini",
+    "baseline_prompt": "baseline.v2@19cbe3052c44",
+    "graph_category_acc": 1.0,
+    "baseline_category_acc": 1.0,
+    "baseline_action_acc": 0.5,
+    "graph_avg_latency_s": 1.15,
+    "baseline_avg_latency_s": 1.17,
+    "graph_cost_per_claim_usd": 0.000373,
+    "baseline_cost_per_claim_usd": 0.000293,
+    "graph_usage": {
+      "calls": 16,
+      "input_tokens": 6201,
+      "output_tokens": 291
+    },
+    "baseline_usage": {
+      "calls": 16,
+      "input_tokens": 4392,
+      "output_tokens": 309
+    },
+    "misses": [
+      {
+        "id": "dev-01",
+        "expected": [
+          "duplicate_charge",
+          "refund"
+        ],
+        "graph_category": "duplicate_charge",
+        "baseline": [
+          "duplicate_charge",
+          "escalate_operations"
+        ]
+      },
+      {
+        "id": "dev-04",
+        "expected": [
+          "transfer_not_credited",
+          "escalate_operations"
+        ],
+        "graph_category": "transfer_not_credited",
+        "baseline": [
+          "transfer_not_credited",
+          "inform_deadline"
+        ]
+      },
+      {
+        "id": "dev-07",
+        "expected": [
+          "unrecognized_purchase",
+          "request_info"
+        ],
+        "graph_category": "unrecognized_purchase",
+        "baseline": [
+          "unrecognized_purchase",
+          "escalate_fraud"
+        ]
+      },
+      {
+        "id": "dev-08",
+        "expected": [
+          "qr_payment",
+          "inform_deadline"
+        ],
+        "graph_category": "qr_payment",
+        "baseline": [
+          "qr_payment",
+          "escalate_operations"
+        ]
+      },
+      {
+        "id": "dev-10",
+        "expected": [
+          "cashback",
+          "inform_deadline"
+        ],
+        "graph_category": "cashback",
+        "baseline": [
+          "cashback",
+          "escalate_promotions"
+        ]
+      },
+      {
+        "id": "dev-12",
+        "expected": [
+          "card_block",
+          "inform_deadline"
+        ],
+        "graph_category": "card_block",
+        "baseline": [
+          "card_block",
+          "block_card"
+        ]
+      },
+      {
+        "id": "dev-14",
+        "expected": [
+          "other",
+          "escalate_operations"
+        ],
+        "graph_category": "other",
+        "baseline": [
+          "other",
+          "reject"
+        ]
+      },
+      {
+        "id": "dev-15",
+        "expected": [
+          "other",
+          "escalate_operations"
+        ],
+        "graph_category": "other",
+        "baseline": [
+          "other",
+          "reject"
+        ]
+      }
+    ]
+  }
+]
