@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: lumen
+      POSTGRES_USER: lumen
+      POSTGRES_PASSWORD: lumen
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lumen"]
+      interval: 5s
+      retries: 10
+
+  core-mock:
+    build: ./services/core-mock
+    environment:
+      DATABASE_URL: postgresql+psycopg://lumen:lumen@db:5432/lumen
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+
+  agent-api:
+    build: ./services/agent-api
+    env_file:
+      - path: .env
+        required: false   # without it, agent-api uses the offline embedder
+    environment:
+      CORE_URL: http://core-mock:8000
+    volumes:
+      - index-data:/srv/data
+    depends_on:
+      - core-mock
+    ports:
+      - "8000:8000"
+
+volumes:
+  db-data:
+  index-data:

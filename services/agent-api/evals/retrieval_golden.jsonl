@@ -1,0 +1,12 @@
+{"query": "Me cobraron dos veces la misma compra en la tienda de deportes", "expected_doc": "01_cobro_duplicado"}
+{"query": "Aparecen dos cobros iguales del mismo comercio con minutos de diferencia", "expected_doc": "01_cobro_duplicado"}
+{"query": "Hice una transferencia hace tres días y sigue pendiente, no le llegó a mi casero", "expected_doc": "02_transferencia_no_acreditada"}
+{"query": "El dinero que transferí no se acreditó en la cuenta destino", "expected_doc": "02_transferencia_no_acreditada"}
+{"query": "No reconozco una compra internacional en Miami que figura en mi cuenta", "expected_doc": "03_desconocimiento_compra"}
+{"query": "Creo que me robaron los datos de la tarjeta, hay un consumo que no hice", "expected_doc": "03_desconocimiento_compra"}
+{"query": "Puedo aprobar un reintegro de 200 mil pesos o necesito un supervisor", "expected_doc": "04_reintegros_y_aprobaciones"}
+{"query": "Cuál es el límite de reintegro automático para una cuenta nueva", "expected_doc": "04_reintegros_y_aprobaciones"}
+{"query": "Pagué con QR en un café, me dio rechazado pero me descontaron la plata", "expected_doc": "05_pagos_qr"}
+{"query": "No me llegó el cashback de la promo del supermercado de los miércoles", "expected_doc": "06_cashback_y_promociones"}
+{"query": "El cliente me pide que le diga el código de seguridad de la tarjeta", "expected_doc": "07_seguridad_y_datos"}
+{"query": "Me bloquearon la tarjeta por fraude, cuándo la puedo desbloquear", "expected_doc": "08_bloqueo_de_tarjeta"}

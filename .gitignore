@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+services/agent-api/data/
+
+# Local, unversioned files
+.private/
+*.local.md
