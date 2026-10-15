@@ -1,0 +1,16 @@
+{"id": "dev-01", "customer_id": "C0001", "claim": "Me cobraron dos veces las zapatillas que compré en la Tienda Deportiva Gol, pero hice una sola compra.", "category": "duplicate_charge", "action": "refund"}
+{"id": "dev-02", "customer_id": "C0010", "claim": "Me debitaron el mismo café dos veces con cinco minutos de diferencia.", "category": "duplicate_charge", "action": "refund"}
+{"id": "dev-03", "customer_id": "C0005", "claim": "Me cobraron dos veces la compra del súper y encima no me dieron el cashback de la promo.", "category": "duplicate_charge", "action": "refund"}
+{"id": "dev-04", "customer_id": "C0002", "claim": "Le transferí el alquiler al dueño hace tres días y todavía no le llegó, me figura pendiente.", "category": "transfer_not_credited", "action": "escalate_operations"}
+{"id": "dev-05", "customer_id": "C0001", "claim": "Le pasé plata a mi hermana hace una hora y todavía no le aparece en la cuenta.", "category": "transfer_not_credited", "action": "inform_deadline"}
+{"id": "dev-06", "customer_id": "C0003", "claim": "Me aparece una compra en ELECTRO STORE MIAMI que yo no hice, nunca estuve en Estados Unidos.", "category": "unrecognized_purchase", "action": "escalate_fraud"}
+{"id": "dev-07", "customer_id": "C9999", "claim": "Tengo un cobro de $5.000 de una app de música que no reconozco.", "category": "unrecognized_purchase", "action": "request_info"}
+{"id": "dev-08", "customer_id": "C0004", "claim": "Pagué con QR en el café, me dijo que el pago se rechazó pero igual vi que me descontaron la plata.", "category": "qr_payment", "action": "inform_deadline"}
+{"id": "dev-09", "customer_id": "C0010", "claim": "Pagué con QR en la verdulería, a mí me figura aprobado pero la verdulera dice que no le llegó nada.", "category": "qr_payment", "action": "escalate_operations"}
+{"id": "dev-10", "customer_id": "C0005", "claim": "Compré en el súper el miércoles de la promo del 15% y nunca me devolvieron el cashback.", "category": "cashback", "action": "inform_deadline"}
+{"id": "dev-11", "customer_id": "C0001", "claim": "Perdí la tarjeta en el colectivo, necesito bloquearla ya.", "category": "card_block", "action": "block_card"}
+{"id": "dev-12", "customer_id": "C0003", "claim": "Quiero que me desbloqueen la tarjeta, me la bloquearon por la compra que no reconocí.", "category": "card_block", "action": "inform_deadline"}
+{"id": "dev-13", "customer_id": "C0003", "claim": "Me llegó un SMS de Lumen pidiéndome la clave para validar la cuenta, ¿es real?", "category": "security", "action": "escalate_security"}
+{"id": "dev-14", "customer_id": "C0002", "claim": "¿Cuál es el horario de atención de las sucursales del Banco Nación?", "category": "other", "action": "escalate_operations"}
+{"id": "dev-15", "customer_id": "C0005", "claim": "Hola, ¿me recomendás una buena película para ver hoy?", "category": "other", "action": "escalate_operations"}
+{"id": "dev-16", "customer_id": "C0010", "claim": "Hace un mes compré en la farmacia con la promo del 20% de cashback y nunca me lo acreditaron.", "category": "cashback", "action": "escalate_promotions"}

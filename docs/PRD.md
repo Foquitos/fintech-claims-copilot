@@ -123,7 +123,7 @@ The goal is to show end to end how an LLM agent is built, evaluated, secured and
 - **Claim**: customer message the support agent enters into the system, with the customer ID.
 - **Category**: claim type; one of: duplicate charge, transfer not credited, unrecognized purchase, QR payment, cashback, card block, security question, other.
 - **Policy**: Lumen support rules document; lives in `policies/` (in Spanish).
-- **Action**: decision proposed by the agent; one of: refund, escalate to Operations, escalate to Fraud, inform timeline, request data, reject.
+- **Action**: decision proposed by the agent; one of: refund, escalate to Operations, escalate to Fraud, escalate to Security, escalate to Promotions, block card, inform timeline, request data, reject.
 - **Human approval**: the flow pauses until a supervisor approves or rejects the action.
 - **Golden set**: claims with the correct category and action labeled by hand.
 - **Red team**: claims that try to manipulate the agent (prompt injection).

@@ -48,7 +48,7 @@ Policies and claims are in Spanish (Lumen is an Argentine wallet); code and docs
 ## Running it
 
 ```bash
-cp .env.example .env          # optional: set OPENAI_API_KEY
+cp .env.example .env          # optional: Azure OpenAI or OpenAI credentials
 docker compose up --build
 ```
 
