@@ -112,3 +112,29 @@ deterministic per category, and a fixed path is cheaper, testable without tokens
 talked into extra calls); a separate fake class in tests (tests use the real client over
 `httpx.MockTransport`, so HTTP error mapping is exercised too); `urllib` instead of httpx (it
 was already pinned for tests, now it is a runtime dependency).
+
+## 2026-10-20 · Proposal: the model drafts, the graph validates
+
+**Decision.** `propose` asks the model for a `ProposalDraft` (action, amount, transaction id,
+cited policy ids, customer reply, confidence); the category is copied from `classify`, so the
+two cannot disagree. A refund without a target or with a non-positive amount fails schema
+validation and is retried; stray amounts on other actions are dropped. Malformed output is
+retried up to 2 times (3 attempts, each recorded in `errors`), then the case escalates to
+Operations (RF-011). A separate `validate` node then applies checks in code, and any failure
+sets `escalate_operations`, `needs_review` and a readable reason:
+
+- citations must be ids of the retrieved excerpts; others are dropped and, if none remain, the
+  proposal is uncited (RF-005, AC-005.1/2);
+- a refund must target a looked-up transaction and not exceed its amount;
+- below 0.6 confidence (the lower of classify and propose), a non-escalation action becomes an
+  escalation (PRD 9.1.6). Existing escalations are kept: they already go to a person.
+
+Approval limits stay out of both the prompt and this node: `core-mock` enforces them, and the
+RF-006 interrupt decides when to pause.
+
+**Discarded.** Retrying on failed citations or grounding (an uncited answer is a signal for a
+human, not noise to resample); validating inside `propose` (a separate node makes the
+before/after visible in the trace); asking the model for the category again.
+
+**Note.** When `validate` overrides the action, `customer_reply` still reflects the model's
+original intent; `needs_review` tells the support agent not to send it as is.
