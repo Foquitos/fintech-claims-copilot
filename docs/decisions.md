@@ -178,3 +178,15 @@ data is anchored to a fixed date.
 
 **Discarded.** The system clock (with fixed mock data every deadline would look expired);
 leaving it to the model (it guessed).
+
+## 2026-10-20 · One refund per transaction, enforced by core-mock
+
+**Decision.** `POST /refunds` answers 409 if the transaction already has a refund, pending or
+approved. The end-to-end run created two refunds for the same charge: one from a request that
+failed after the write, one from the retry. Like the approval limits, this belongs to the
+system of record, not to the agent: any caller, retry or duplicated claim is covered. In the
+graph, the 409 is a core-mock error, so the case escalates to Operations without retrying.
+
+**Discarded.** Deduplicating in agent-api (it only covers this caller, and two cases for the
+same claim are different threads); an idempotency key per request (it covers retries of the
+same request but not the same claim submitted twice).

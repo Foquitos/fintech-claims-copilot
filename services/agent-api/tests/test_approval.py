@@ -122,3 +122,12 @@ def test_resume_works_with_enums_stored_as_plain_strings(index, cited):
     from app.agent.graph import _proposal_input
     text = _proposal_input({"claim": "x", "category": "duplicate_charge", "today": "2026-10-10"})
     assert '"category": "duplicate_charge"' in text
+
+
+def test_second_refund_on_a_transaction_escalates(case, cited):
+    # core-mock answers 409 when the transaction was already refunded (a claim sent twice).
+    c = case(FakeLLM(DUP, draft([cited], amount=18500.0)), core=FakeCore(already_refunded=True))
+
+    assert c.values["action"] == Action.ESCALATE_OPERATIONS
+    assert "refund" not in c.values
+    assert c.values["errors"][-1] == "execute: POST /refunds: HTTP 409"

@@ -64,12 +64,15 @@ class FakeCore:
     """A real CoreClient over a mock transport that serves CUSTOMERS/TRANSACTIONS.
 
     Refunds follow core-mock's standard limit ($50,000). `hold_refunds` makes it hold every
-    refund, to test core-mock being stricter than the graph; `writes_down` fails only writes.
+    refund, to test core-mock being stricter than the graph; `writes_down` fails only writes;
+    `already_refunded` answers 409 like core-mock does for a second refund on a transaction.
     """
 
-    def __init__(self, down: bool = False, hold_refunds: bool = False, writes_down: bool = False):
+    def __init__(self, down: bool = False, hold_refunds: bool = False, writes_down: bool = False,
+                 already_refunded: bool = False):
         self.requests: list[str] = []
         self.down, self.hold_refunds, self.writes_down = down, hold_refunds, writes_down
+        self.already_refunded = already_refunded
         self.client = CoreClient("http://core", transport=httpx.MockTransport(self._handle))
 
     @property
@@ -83,6 +86,8 @@ class FakeCore:
         parts = request.url.path.strip("/").split("/")
         if parts == ["health"]:
             return httpx.Response(200, json={"status": "ok", "reference_date": f"{TODAY}T12:00:00"})
+        if parts == ["refunds"] and self.already_refunded:
+            return httpx.Response(409, json={"detail": "Transaction already has refund R0"})
         if parts == ["refunds"]:
             data = json.loads(request.content)
             held = self.hold_refunds or float(data["amount"]) > 50000

@@ -140,6 +140,10 @@ def create_refund(body: RefundIn, db: Db):
         raise HTTPException(404, "Transaction not found")
     if body.amount > t.amount:
         raise HTTPException(422, "Refund cannot exceed the transaction amount")
+    # One refund per transaction: a claim sent twice, or a retried request, must not pay twice.
+    existing = db.scalar(select(RefundRequest).where(RefundRequest.transaction_id == t.id))
+    if existing:
+        raise HTTPException(409, f"Transaction already has refund {existing.id} ({existing.status})")
     customer = db.get(Customer, t.customer_id)
     is_new = REFERENCE_DATE - customer.created_at < timedelta(days=NEW_ACCOUNT_DAYS)
     limit = NEW_ACCOUNT_APPROVAL_LIMIT if is_new else AUTO_APPROVAL_LIMIT
