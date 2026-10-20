@@ -23,7 +23,7 @@ flowchart LR
 | Service | What it does | Stack |
 |---|---|---|
 | `core-mock` | Wallet core API: customers, transactions and refund requests | FastAPI, SQLAlchemy, PostgreSQL |
-| `agent-api` | RAG over policies and, from phase 2, the agent graph | FastAPI, FAISS, OpenAI, LangGraph |
+| `agent-api` | RAG over policies, the agent graph and claim cases with human approval | FastAPI, FAISS, OpenAI, LangGraph |
 | `guardrails` | Input and output validation (phase 3) | FastAPI, Pydantic |
 
 Policies and claims are in Spanish (Lumen is an Argentine wallet); code and docs are in English.
@@ -68,7 +68,7 @@ python -m evals.retrieval     # inside agent-api: retrieval metrics
 ## Roadmap
 
 - [x] **Phase 1** — core-mock with data and scenarios, policies, RAG with FAISS, retrieval golden set, CI
-- [ ] **Phase 2** — LangGraph agent: classification, tools against core-mock, human approval
+- [x] **Phase 2** — LangGraph agent: classification, tools against core-mock, human approval
 - [ ] **Phase 3** — guardrails service, agent golden set and prompt-injection red team in CI
 - [ ] **Phase 4** — pgvector and LLM tracing with Langfuse
 - [ ] **Phase 5** — Azure deployment with Terraform, CD from GitHub Actions via OIDC

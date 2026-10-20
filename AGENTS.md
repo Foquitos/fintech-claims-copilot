@@ -12,7 +12,11 @@ A claims copilot for support agents at **Lumen**, a fictional digital wallet. A 
 ## Status
 
 - **Phase 1 (done):** `core-mock`, 8 policies, RAG with FAISS, retrieval golden set, Docker, CI.
-- **Next: Phase 2** — LangGraph agent (RF-001 to RF-007, RF-011). Phases 3–6 in `docs/PRD.md` §12.
+- **Phase 2 (done):** LangGraph agent (RF-001 to RF-007, RF-011): classify → retrieve policies →
+  core-mock lookup → propose → validate → human approval (Postgres checkpoints) → refund.
+  Case endpoints in `agent-api`. Design decisions in `docs/decisions.md`.
+- **Next: Phase 3** — agent golden set, evals (EV-1, EV-2, EV-5), guardrails service, red team.
+  Phases 3–6 in `docs/PRD.md` §12.
 
 ## Layout
 
