@@ -82,3 +82,33 @@ classification already saturates and the proposal step needs more reasoning).
 
 **Note.** The dev set is written for model selection only and is not reused in the golden set,
 so prompt changes are not tuned against the cases that judge them.
+
+## 2026-10-20 · Policy retrieval queries with the raw claim, top 3
+
+**Decision.** `retrieve_policies` searches the index with the claim text as written and keeps
+the top 3 chunks (id, doc, section, text, score). That is the same query and `k` the retrieval
+golden set measures (EV-3 is hit@3), so the eval scores exactly what the proposal will see.
+
+**Discarded.** Prefixing the classified category to the query (it might help short claims, but
+it would no longer be the query EV-3 measures; revisit with Azure embeddings if hit@3 drops
+on real claims); a score threshold (no data yet to set one, and the proposal step must cite
+anyway).
+
+**Note.** With the offline `hash` embedder, a short claim such as "Me cobraron dos veces las
+zapatillas" ranks the unrecognized-purchase policy first. Graph tests therefore check that
+the top 3 reach the state, not which policy wins; ranking quality belongs to EV-3.
+
+## 2026-10-20 · core-mock tools: read-only client, failures become actions
+
+**Decision.** `app/tools/core.py` wraps core-mock in a small `CoreClient` (httpx, 5 s timeout,
+`CORE_URL`), injected into the graph like the LLM. `lookup_customer` always reads the customer
+and reads the last 30 days of transactions only for categories that depend on movements (card
+block and security do not). A 404 becomes `request_info` (AC-003.2); a timeout, connection
+error or 5xx becomes `escalate_operations` (PRD 9.1.6). Every call, failed or not, is appended
+to `tool_calls` in the state so the trace shows what was checked (AC-003.1).
+
+**Discarded.** Letting the LLM choose tools through function calling (the lookups are
+deterministic per category, and a fixed path is cheaper, testable without tokens and cannot be
+talked into extra calls); a separate fake class in tests (tests use the real client over
+`httpx.MockTransport`, so HTTP error mapping is exercised too); `urllib` instead of httpx (it
+was already pinned for tests, now it is a runtime dependency).

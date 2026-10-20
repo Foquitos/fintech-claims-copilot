@@ -1,7 +1,7 @@
 """Typed state shared by the graph nodes.
 
 Each node returns a partial dict; LangGraph merges it into the state. Fields filled by later
-nodes (policies, transactions, proposal) arrive with RF-002 to RF-007.
+nodes (proposal, approval) arrive with RF-004 to RF-007.
 """
 import operator
 from enum import Enum
@@ -51,9 +51,16 @@ class ClaimState(TypedDict, total=False):
     # classify
     category: Category
     confidence: float
-    # out_of_scope (and, from RF-004 on, the proposal)
+    # retrieve_policies (RF-002): the chunks a proposal may cite
+    policies: list[dict]
+    # lookup_customer (RF-003): what core-mock returned (DNI already masked by core-mock)
+    customer: dict
+    transactions: list[dict]
+    # out_of_scope / lookup_customer on failure (and, from RF-004 on, the proposal)
     action: Action
     # Observability: which node ran with which prompt version, and any recoverable error.
     # Annotated reducers make nodes add to these fields instead of overwriting them.
     prompt_versions: Annotated[dict[str, str], _merge]
     errors: Annotated[list[str], operator.add]
+    # Every tool call with its arguments and outcome, so the trace shows what was checked.
+    tool_calls: Annotated[list[dict], operator.add]
