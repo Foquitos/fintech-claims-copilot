@@ -1,7 +1,4 @@
 """Agent graph tests with a fake LLM and a mocked core-mock: no network, no tokens."""
-from pathlib import Path
-
-import httpx
 import pytest
 from pydantic import ValidationError
 
@@ -9,88 +6,13 @@ from app import prompts
 from app.agent.graph import CLASSIFY_PROMPT, PROPOSE_PROMPT, build_graph
 from app.agent.state import Action, Category, Classification, ProposalDraft
 from app.llm import LLMOutputError, get_client
-from app.rag.chunking import load_policies
-from app.rag.embeddings import HashEmbedder
-from app.rag.index import PolicyIndex
-from app.tools.core import CoreClient
 
-ROOT = Path(__file__).resolve().parents[1]
-
-CUSTOMERS = {"C0001": {"id": "C0001", "full_name": "Lucía Fernández", "dni_masked": "*****222",
-                       "segment": "standard", "created_at": "2024-04-10T12:00:00",
-                       "card_blocked": False}}
-TRANSACTIONS = {"C0001": [
-    {"id": "T0002", "customer_id": "C0001", "created_at": "2026-09-28T15:30:00",
-     "type": "card_purchase", "status": "approved", "amount": "45999.00",
-     "counterparty": "Zapatillas Run", "description": "Compra con tarjeta"},
-    {"id": "T0001", "customer_id": "C0001", "created_at": "2026-09-28T15:28:00",
-     "type": "card_purchase", "status": "approved", "amount": "45999.00",
-     "counterparty": "Zapatillas Run", "description": "Compra con tarjeta"},
-]}
-
-
-class FakeLLM:
-    """Returns queued replies in order (an Exception instance is raised) and records calls."""
-
-    def __init__(self, *replies):
-        self.replies = list(replies)
-        self.calls: list[dict] = []
-
-    def generate(self, system, user, schema):
-        self.calls.append({"system": system, "user": user, "schema": schema})
-        assert self.replies, "unexpected LLM call"
-        reply = self.replies.pop(0)
-        if isinstance(reply, Exception):
-            raise reply
-        return reply
-
-
-class FakeCore:
-    """A real CoreClient over a mock transport that serves CUSTOMERS/TRANSACTIONS."""
-
-    def __init__(self, down: bool = False):
-        self.requests: list[str] = []
-        self.down = down
-        self.client = CoreClient("http://core", transport=httpx.MockTransport(self._handle))
-
-    def _handle(self, request: httpx.Request) -> httpx.Response:
-        self.requests.append(f"{request.method} {request.url.path}")
-        if self.down:
-            raise httpx.ConnectTimeout("core-mock timed out", request=request)
-        parts = request.url.path.strip("/").split("/")
-        if parts[0] == "customers" and parts[1] in CUSTOMERS:
-            if len(parts) == 2:
-                return httpx.Response(200, json=CUSTOMERS[parts[1]])
-            return httpx.Response(200, json=TRANSACTIONS[parts[1]])
-        return httpx.Response(404, json={"detail": "Customer not found"})
-
-
-CLAIM = "Me cobraron dos veces las zapatillas"
-DUP = Classification(category=Category.DUPLICATE_CHARGE, confidence=0.93)
-
-
-@pytest.fixture(scope="module")
-def index():
-    return PolicyIndex.build(load_policies(ROOT / "policies"), HashEmbedder())
-
-
-@pytest.fixture(scope="module")
-def cited(index):
-    """The id of the top policy excerpt retrieved for CLAIM, i.e. a valid citation."""
-    return index.search(CLAIM, k=3)[0].chunk.id
-
-
-def draft(cited_policies, action=Action.REFUND, amount=45999.0, transaction_id="T0002",
-          confidence=0.9, reply="Te reintegramos el cobro T0002.") -> ProposalDraft:
-    return ProposalDraft(action=action, amount=amount, transaction_id=transaction_id,
-                         cited_policies=cited_policies, customer_reply=reply,
-                         confidence=confidence)
+from .fakes import CLAIM, DUP, TODAY, FakeCore, FakeLLM, draft
 
 
 @pytest.fixture
 def run(index):
-    def _run(llm, claim=CLAIM, customer_id="C0001",
-             core=None):
+    def _run(llm, claim=CLAIM, customer_id="C0001", core=None):
         core = core or FakeCore()
         return build_graph(llm, index, core.client).invoke(
             {"claim": claim, "customer_id": customer_id})
@@ -147,7 +69,9 @@ def test_duplicate_charge_retrieves_policy_and_checks_transactions(run, index, c
     expected = [h.chunk.id for h in index.search(CLAIM, k=3)]
     assert [p["id"] for p in out["policies"]] == expected
     assert {"id", "doc", "section", "text", "score"} <= out["policies"][0].keys()
-    assert [c["tool"] for c in out["tool_calls"]] == ["get_customer", "list_transactions"]
+    # The refund is within limits, so the write tool runs right after the reads.
+    assert [c["tool"] for c in out["tool_calls"]] == [
+        "get_customer", "list_transactions", "create_refund"]
     assert all(c["ok"] for c in out["tool_calls"])
     assert out["customer"]["dni_masked"] == "*****222"
     assert [t["id"] for t in out["transactions"]] == ["T0002", "T0001"]
@@ -161,7 +85,7 @@ def test_categories_without_movements_skip_transactions(run, cited, category):
                       draft([cited], action=Action.ESCALATE_SECURITY)), core=core)
 
     assert [c["tool"] for c in out["tool_calls"]] == ["get_customer"]
-    assert core.requests == ["GET /customers/C0001"]
+    assert core.requests == ["GET /customers/C0001", "GET /health"]
     assert "transactions" not in out
 
 
@@ -201,10 +125,10 @@ def test_refund_proposal_is_validated_and_kept(run, cited):
     assert not p.needs_review and p.review_reasons == []
     assert out["propose_attempts"] == 1
     prompt = prompts.load(PROPOSE_PROMPT)
-    assert out["prompt_versions"]["propose"] == f"propose.v1@{prompt.sha}"
-    # The model sees the claim, both charges and the retrieved excerpts with their ids.
+    assert out["prompt_versions"]["propose"] == f"propose.v2@{prompt.sha}"
+    # The model sees the core's date, the claim, both charges and the excerpts with their ids.
     user = llm.calls[1]["user"]
-    assert all(s in user for s in (CLAIM, "T0001", "T0002", cited))
+    assert all(s in user for s in (TODAY, CLAIM, "T0001", "T0002", cited))
 
 
 def test_three_invalid_outputs_escalate(run):

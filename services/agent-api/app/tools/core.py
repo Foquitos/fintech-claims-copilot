@@ -1,4 +1,4 @@
-"""Read tools against core-mock (RF-003).
+"""Tools against core-mock: reads (RF-003) and the refund write (RF-007).
 
 The graph depends on this small client, not on httpx, so tests inject a mock transport and
 need no running service. Failures surface as two exceptions the graph turns into actions:
@@ -35,13 +35,29 @@ class CoreClient:
     def get_transaction(self, transaction_id: str) -> dict:
         return self._get(f"/transactions/{transaction_id}")
 
+    def today(self) -> str:
+        """The core's clock (ISO date). core-mock's data is anchored to a fixed date."""
+        return self._get("/health")["reference_date"][:10]
+
+    def create_refund(self, transaction_id: str, amount: float, reason: str) -> dict:
+        # core-mock decides the status: above its limits the refund stays pending_approval.
+        return self._request("POST", "/refunds", json={
+            "transaction_id": transaction_id, "amount": str(amount), "reason": reason})
+
+    def approve_refund(self, refund_id: str) -> dict:
+        return self._request("POST", f"/refunds/{refund_id}/approve")
+
     def _get(self, path: str, params: dict | None = None):
+        return self._request("GET", path, params=params)
+
+    def _request(self, method: str, path: str, **kwargs):
+        # Writes are never retried here (PRD 9.1.6): a failure goes back to the graph.
         try:
-            r = self._http.get(path, params=params)
+            r = self._http.request(method, path, **kwargs)
         except httpx.HTTPError as e:
-            raise CoreError(f"GET {path}: {e}") from e
+            raise CoreError(f"{method} {path}: {e}") from e
         if r.status_code == 404:
-            raise NotFound(f"GET {path}: not found")
+            raise NotFound(f"{method} {path}: not found")
         if r.is_error:
-            raise CoreError(f"GET {path}: HTTP {r.status_code}")
+            raise CoreError(f"{method} {path}: HTTP {r.status_code}")
         return r.json()

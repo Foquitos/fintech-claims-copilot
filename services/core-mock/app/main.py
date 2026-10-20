@@ -20,6 +20,9 @@ from .seed import REFERENCE_DATE, seed
 
 # Refunds above this amount stay pending until a human approves them.
 AUTO_APPROVAL_LIMIT = Decimal("50000")
+# Stricter limit for accounts younger than NEW_ACCOUNT_DAYS.
+NEW_ACCOUNT_APPROVAL_LIMIT = Decimal("20000")
+NEW_ACCOUNT_DAYS = 90
 
 
 @asynccontextmanager
@@ -137,9 +140,28 @@ def create_refund(body: RefundIn, db: Db):
         raise HTTPException(404, "Transaction not found")
     if body.amount > t.amount:
         raise HTTPException(422, "Refund cannot exceed the transaction amount")
-    status = RefundStatus.APPROVED if body.amount <= AUTO_APPROVAL_LIMIT else RefundStatus.PENDING_APPROVAL
+    customer = db.get(Customer, t.customer_id)
+    is_new = REFERENCE_DATE - customer.created_at < timedelta(days=NEW_ACCOUNT_DAYS)
+    limit = NEW_ACCOUNT_APPROVAL_LIMIT if is_new else AUTO_APPROVAL_LIMIT
+    status = RefundStatus.APPROVED if body.amount <= limit else RefundStatus.PENDING_APPROVAL
     r = RefundRequest(id=f"R{uuid.uuid4().hex[:10]}", transaction_id=t.id, amount=body.amount,
                       reason=body.reason, status=status, created_at=datetime.now())
     db.add(r)
+    db.commit()
+    return RefundOut(id=r.id, transaction_id=r.transaction_id, amount=r.amount, status=r.status)
+
+
+@app.post("/refunds/{refund_id}/approve", response_model=RefundOut)
+def approve_refund(refund_id: str, db: Db):
+    """A supervisor's approval, relayed by agent-api after the human decision (RF-007).
+
+    It is the only way out of pending_approval: creating a refund never skips the limits.
+    """
+    r = db.get(RefundRequest, refund_id)
+    if not r:
+        raise HTTPException(404, "Refund not found")
+    if r.status != RefundStatus.PENDING_APPROVAL:
+        raise HTTPException(409, f"Refund is {r.status}, not pending approval")
+    r.status = RefundStatus.APPROVED
     db.commit()
     return RefundOut(id=r.id, transaction_id=r.transaction_id, amount=r.amount, status=r.status)

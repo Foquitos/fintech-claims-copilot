@@ -1,7 +1,7 @@
 """Typed state shared by the graph nodes.
 
-Each node returns a partial dict; LangGraph merges it into the state. Fields filled by later
-nodes (approval) arrive with RF-006 and RF-007.
+Each node returns a partial dict; LangGraph merges it into the state. With a checkpointer the
+state is saved after every node, which is what lets a case wait for a supervisor (RF-006).
 """
 import operator
 from enum import Enum
@@ -74,6 +74,14 @@ class Proposal(ProposalDraft):
     review_reasons: list[str] = []
 
 
+class Decision(BaseModel):
+    """A supervisor's decision on a paused case (RF-007)."""
+
+    approved: bool
+    supervisor: str = Field(min_length=1, max_length=80)
+    note: str | None = Field(default=None, max_length=500)
+
+
 class ClaimState(TypedDict, total=False):
     # Input
     claim: str
@@ -86,9 +94,15 @@ class ClaimState(TypedDict, total=False):
     # lookup_customer (RF-003): what core-mock returned (DNI already masked by core-mock)
     customer: dict
     transactions: list[dict]
+    today: str  # the core's date, so deadlines are computed against its clock
     # propose and validate (RF-004/005/011)
     proposal: Proposal
     propose_attempts: int
+    # approval (RF-006/007): why the case needs a supervisor, and what they decided
+    approval_reasons: list[str]
+    decision: Decision
+    # execute: the refund as core-mock recorded it
+    refund: dict
     # The final action: out_of_scope, lookup_customer on failure, propose after 3 invalid
     # outputs, or the validated proposal's
     action: Action

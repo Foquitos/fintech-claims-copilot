@@ -51,6 +51,9 @@ def test_retrieval_golden_set_offline():
 
 def test_search_endpoint(monkeypatch, tmp_path):
     monkeypatch.setenv("EMBEDDINGS_PROVIDER", "hash")
+    monkeypatch.delenv("AZURE_OPENAI_ENDPOINT", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)  # offline: search works, agent is off
+    monkeypatch.delenv("CHECKPOINT_DB_URL", raising=False)
     monkeypatch.setattr("app.rag.build.INDEX_DIR", tmp_path)
     from app.main import app
     with TestClient(app) as c:

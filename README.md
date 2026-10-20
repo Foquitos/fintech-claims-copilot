@@ -40,7 +40,8 @@ Policies and claims are in Spanish (Lumen is an Argentine wallet); code and docs
   queries with the expected policy; we measure hit@1, hit@3 and MRR. CI enforces a floor.
 - **Sensitive data stays out of the API.** The core never returns the full national ID (DNI), only a masked one.
 - **Approval limits live in the system, not the prompt.** `core-mock` decides that a refund above
-  $50,000 stays pending, not the model: even a manipulated agent cannot skip it.
+  $50,000 (or $20,000 on accounts younger than 90 days) stays pending, not the model: even a
+  manipulated agent cannot skip it. Only an explicit supervisor approval releases it.
 - **Purpose-built scenarios.** Customers `C0001`–`C0006` each carry a typical claim (duplicate
   charge, pending transfer, possible fraud, reversed QR payment, missing cashback, large refund)
   and are the basis for evaluating the agent.
@@ -53,7 +54,8 @@ docker compose up --build
 ```
 
 - core-mock: http://localhost:8001/docs
-- agent-api: http://localhost:8000/docs → try `POST /policies/search`
+- agent-api: http://localhost:8000/docs → try `POST /policies/search`, or with credentials
+  `POST /cases` (e.g. customer `C0006`) and then `POST /cases/{id}/decision`
 
 Without Docker, run each service on its own:
 

@@ -138,3 +138,43 @@ before/after visible in the trace); asking the model for the category again.
 
 **Note.** When `validate` overrides the action, `customer_reply` still reflects the model's
 original intent; `needs_review` tells the support agent not to send it as is.
+
+## 2026-10-20 · Human approval: interrupt in the graph, limits enforced again in core-mock
+
+**Decision.** After `validate`, the graph pauses with `interrupt()` in an `approval` node when
+the action is a refund above $50,000, a refund above $20,000 on an account younger than 90 days
+(age measured against the core's date), or `escalate_fraud` (RF-006). The checkpointer keeps
+the case: each case is a LangGraph thread, and `POST /cases/{id}/decision` resumes it with
+`Command(resume=decision)` (RF-007). Only an approved refund continues to `execute`, the single
+write tool. core-mock applies the same limits on its own: `POST /refunds` above them always
+returns `pending_approval`, and the refund is released only by `POST /refunds/{id}/approve`,
+which agent-api calls only after a supervisor approved. If the graph and core-mock ever
+disagree, core-mock wins and the case is flagged for review.
+
+**Discarded.** Creating the refund before the pause and approving it later (AC-006.1 requires
+that nothing is written while pending); a supervisor flag on `POST /refunds` (one call could
+both create and approve); limits in the prompt (design invariant).
+
+## 2026-10-20 · Checkpoints in a separate `agent` database
+
+**Decision.** `PostgresSaver` keeps checkpoints in an `agent` database inside the same Postgres
+container, created by `docker/postgres-init/`. Without `CHECKPOINT_DB_URL`, agent-api falls back
+to an in-memory saver and logs a warning. The serializer allowlists the state classes it may
+rebuild, since LangGraph is moving to blocking any other.
+
+**Discarded.** core-mock's database (it would mix the bank's data with the agent's state); a
+second Postgres container (more moving parts for a demo).
+
+**Note.** PostgresSaver stores `str` values inline as JSON, so the `str`-based enums `Category`
+and `Action` come back as plain strings after a resume. The in-memory saver keeps them typed,
+so only the end-to-end run against Postgres exposed it; nodes normalize these fields.
+
+## 2026-10-20 · The proposal sees the core's date (propose.v2)
+
+**Decision.** `lookup_customer` reads the core's date (`/health`), and `propose.v2` receives it
+as `today` with one extra rule: use it to compute elapsed time before applying a deadline.
+Policies depend on elapsed time (15 days for cashback, 48 hours for transfers), and core-mock's
+data is anchored to a fixed date.
+
+**Discarded.** The system clock (with fixed mock data every deadline would look expired);
+leaving it to the model (it guessed).
