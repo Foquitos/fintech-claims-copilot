@@ -7,6 +7,7 @@ services:
       POSTGRES_PASSWORD: lumen
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lumen"]
       interval: 5s
@@ -29,10 +30,14 @@ services:
         required: false   # without it, agent-api uses the offline embedder
     environment:
       CORE_URL: http://core-mock:8000
+      CHECKPOINT_DB_URL: postgresql://lumen:lumen@db:5432/agent
     volumes:
       - index-data:/srv/data
     depends_on:
-      - core-mock
+      db:
+        condition: service_healthy
+      core-mock:
+        condition: service_started
     ports:
       - "8000:8000"
 

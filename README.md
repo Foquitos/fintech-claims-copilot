@@ -23,7 +23,7 @@ flowchart LR
 | Service | What it does | Stack |
 |---|---|---|
 | `core-mock` | Wallet core API: customers, transactions and refund requests | FastAPI, SQLAlchemy, PostgreSQL |
-| `agent-api` | RAG over policies and, from phase 2, the agent graph | FastAPI, FAISS, OpenAI, LangGraph |
+| `agent-api` | RAG over policies, the agent graph and claim cases with human approval | FastAPI, FAISS, OpenAI, LangGraph |
 | `guardrails` | Input and output validation (phase 3) | FastAPI, Pydantic |
 
 Policies and claims are in Spanish (Lumen is an Argentine wallet); code and docs are in English.
@@ -40,7 +40,8 @@ Policies and claims are in Spanish (Lumen is an Argentine wallet); code and docs
   queries with the expected policy; we measure hit@1, hit@3 and MRR. CI enforces a floor.
 - **Sensitive data stays out of the API.** The core never returns the full national ID (DNI), only a masked one.
 - **Approval limits live in the system, not the prompt.** `core-mock` decides that a refund above
-  $50,000 stays pending, not the model: even a manipulated agent cannot skip it.
+  $50,000 (or $20,000 on accounts younger than 90 days) stays pending, not the model: even a
+  manipulated agent cannot skip it. Only an explicit supervisor approval releases it.
 - **Purpose-built scenarios.** Customers `C0001`–`C0006` each carry a typical claim (duplicate
   charge, pending transfer, possible fraud, reversed QR payment, missing cashback, large refund)
   and are the basis for evaluating the agent.
@@ -53,7 +54,8 @@ docker compose up --build
 ```
 
 - core-mock: http://localhost:8001/docs
-- agent-api: http://localhost:8000/docs → try `POST /policies/search`
+- agent-api: http://localhost:8000/docs → try `POST /policies/search`, or with credentials
+  `POST /cases` (e.g. customer `C0006`) and then `POST /cases/{id}/decision`
 
 Without Docker, run each service on its own:
 
@@ -66,7 +68,7 @@ python -m evals.retrieval     # inside agent-api: retrieval metrics
 ## Roadmap
 
 - [x] **Phase 1** — core-mock with data and scenarios, policies, RAG with FAISS, retrieval golden set, CI
-- [ ] **Phase 2** — LangGraph agent: classification, tools against core-mock, human approval
+- [x] **Phase 2** — LangGraph agent: classification, tools against core-mock, human approval
 - [ ] **Phase 3** — guardrails service, agent golden set and prompt-injection red team in CI
 - [ ] **Phase 4** — pgvector and LLM tracing with Langfuse
 - [ ] **Phase 5** — Azure deployment with Terraform, CD from GitHub Actions via OIDC

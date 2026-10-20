@@ -80,7 +80,11 @@ def _scenario_customers(ids: _Ids) -> tuple[list[Customer], list[Transaction]]:
                     type=TxType.PURCHASE, status=TxStatus.APPROVED, amount=_money(40000),
                     counterparty="Supermercado Del Parque",
                     description="Compra con promo 15% cashback miércoles"),
-        # C0006: new customer asking for a large refund (must go to human approval).
+        # C0006: new customer (60 days) charged twice for a large purchase. Refunding the
+        # duplicate exceeds both approval limits, so it must go to human approval.
+        Transaction(id=ids.next(), customer_id="C0006", created_at=d - timedelta(days=4, minutes=3),
+                    type=TxType.PURCHASE, status=TxStatus.APPROVED, amount=_money(480000),
+                    counterparty="Electrodomésticos Norte", description="Heladera"),
         Transaction(id=ids.next(), customer_id="C0006", created_at=d - timedelta(days=4),
                     type=TxType.PURCHASE, status=TxStatus.APPROVED, amount=_money(480000),
                     counterparty="Electrodomésticos Norte", description="Heladera"),
